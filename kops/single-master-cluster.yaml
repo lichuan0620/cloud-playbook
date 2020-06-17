@@ -1,0 +1,56 @@
+apiVersion: kops.k8s.io/v1alpha2
+kind: Cluster
+metadata:
+  name: k8s.lichuan.guru
+spec:
+  api:
+    dns: {}
+  authorization:
+    rbac: {}
+  channel: stable
+  cloudLabels:
+    kubernetes.io/cluster/k8s.lichuan.guru: owned
+  cloudProvider: aws
+  configBase: s3://kube-lichuan-guru-state-store/k8s.lichuan.guru
+  etcdClusters:
+  - name: main
+    version: 3.3.13
+    cpuRequest: 200m
+    memoryRequest: 100Mi
+    etcdMembers:
+    - instanceGroup: master-us-west-2a
+      name: a
+  - name: events
+    version: 3.3.13
+    cpuRequest: 100m
+    memoryRequest: 100Mi
+    etcdMembers:
+    - instanceGroup: master-us-west-2a
+      name: a
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  kubelet:
+    anonymousAuth: false
+    authorizationMode: Webhook
+    authenticationTokenWebhook: true
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  kubernetesVersion: 1.16.10
+  masterPublicName: api.k8s.lichuan.guru
+  networkCIDR: 172.20.0.0/16
+  networking:
+    kubenet: {}
+  nonMasqueradeCIDR: 100.64.0.0/10
+  sshAccess:
+  - 0.0.0.0/0
+  subnets:
+  - cidr: 172.20.32.0/19
+    name: us-west-2a
+    type: Public
+    zone: us-west-2a
+  topology:
+    dns:
+      type: Public
+    masters: public
+    nodes: public

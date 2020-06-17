@@ -1,0 +1,42 @@
+- job_name: 'etcd-main'
+  scheme: https
+  tls_config:
+    insecure_skip_verify: true
+    ca_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-ca.crt
+    key_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-client.key
+    cert_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-client.crt
+  kubernetes_sd_configs:
+  - role: node
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_node_label_kubernetes_io_role]
+    regex: master
+    action: keep
+  - source_labels: [__address__]
+    regex: ([^:]+)(?::\d+)?
+    replacement: $1:4001
+    target_label: __address__
+  - source_labels: [__meta_kubernetes_node_name]
+    target_label: node
+  - source_labels: [__meta_kubernetes_node_address_internalIP]
+    target_label: host_ip
+- job_name: 'etcd-events'
+  scheme: https
+  tls_config:
+    insecure_skip_verify: true
+    ca_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-ca.crt
+    key_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-client.key
+    cert_file: /etc/prometheus/secrets/etcd-tls-secret/etcd-client.crt
+  kubernetes_sd_configs:
+  - role: node
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_node_label_kubernetes_io_role]
+    regex: master
+    action: keep
+  - source_labels: [__address__]
+    regex: ([^:]+)(?::\d+)?
+    replacement: $1:4002
+    target_label: __address__
+  - source_labels: [__meta_kubernetes_node_name]
+    target_label: node
+  - source_labels: [__meta_kubernetes_node_address_internalIP]
+    target_label: host_ip
