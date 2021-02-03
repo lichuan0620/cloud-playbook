@@ -12,16 +12,15 @@ spec:
     kubernetes.io/cluster/k8s.lichuan.guru: owned
   cloudProvider: aws
   configBase: s3://kube-lichuan-guru-state-store/k8s.lichuan.guru
+  containerRuntime: containerd
   etcdClusters:
   - name: main
-    version: 3.3.13
     cpuRequest: 200m
     memoryRequest: 100Mi
     etcdMembers:
     - instanceGroup: master-us-west-2a
       name: a
   - name: events
-    version: 3.3.13
     cpuRequest: 100m
     memoryRequest: 100Mi
     etcdMembers:
@@ -36,16 +35,18 @@ spec:
     authenticationTokenWebhook: true
   kubernetesApiAccess:
   - 0.0.0.0/0
-  kubernetesVersion: 1.16.10
+  kubernetesVersion: 1.18.15
+  masterInternalName: api.internal.k8s.lichuan.guru
   masterPublicName: api.k8s.lichuan.guru
-  networkCIDR: 172.20.0.0/16
+  networkCIDR: 172.19.0.0/16
+  networkID: vpc-05a60f2ce4fc6e8ad
   networking:
     kubenet: {}
   nonMasqueradeCIDR: 100.64.0.0/10
   sshAccess:
   - 0.0.0.0/0
   subnets:
-  - cidr: 172.20.32.0/19
+  - cidr: 172.19.32.0/19
     name: us-west-2a
     type: Public
     zone: us-west-2a

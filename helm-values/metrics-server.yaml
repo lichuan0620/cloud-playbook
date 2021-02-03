@@ -1,0 +1,28 @@
+USER-SUPPLIED VALUES:
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm install -n kube-system -f helm-values/metrics-server.yaml metrics-server bitnami/metrics-server --atomic --timeout 1m
+apiService:
+  create: true
+extraArgs:
+  kubelet-insecure-tls: true
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+  requests:
+    cpu: 25m
+    memory: 64Mi
+tolerations:
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      preference:
+        matchExpressions:
+        - key: kubernetes.io/role
+          operator: In
+          values:
+          - master

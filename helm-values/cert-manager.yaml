@@ -1,0 +1,31 @@
+USER-SUPPLIED VALUES:
+# helm repo add jetstack https://charts.jetstack.io
+# helm install -n network -f helm-values/cert-manager.yaml cert-manager jetstack/cert-manager --atomic --timeout 1m
+installCRDs: true
+resources:
+  limits:
+    cpu: 50m
+    memory: 128Mi
+  requests:
+    cpu: 25m
+    memory: 64Mi
+prometheus:
+  servicemonitor:
+    enabled: true
+webhook:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 64Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+cainjector:
+  resources:
+    limits:
+      cpu: 50m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 64Mi
+

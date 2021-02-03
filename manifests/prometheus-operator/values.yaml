@@ -1,0 +1,108 @@
+labels: {}
+
+podLabels: {}
+
+podAnnotations: {}
+
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+rbac:
+  create: true
+
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+serviceAccount:
+  create: true
+  ## The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the prometheus-operator.fullname template
+  # name:
+
+image:
+  name: quay.io/prometheus-operator/prometheus-operator
+  ## default to .Chart.apiVersion
+  # tag: v0.43.2
+  pullPolicy: Always
+
+configmapReloaderImage:
+  name: jimmidyson/configmap-reload
+  tag: v0.4.0
+
+prometheusConfigReloaderImage:
+  name: quay.io/prometheus-operator/prometheus-config-reloader
+  ## default to .Chart.apiVersion
+  # tag: v0.43.2
+
+## Additional command line arguments to pass to prometheus-operator
+extraArgs: {}
+
+kubeletService:
+  enabled: true
+  namespace:
+  name: kubelet
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+securityContext:
+  enabled: true
+  runAsUser: 65534  # nobody
+  runAsGroup: 65534 # nobody
+  fsGroup: 65534    # nobody
+
+service:
+  type: ClusterIP
+  port: 8080
+  # clusterIP: None
+  # nodePort: 30080
+  # loadBalancerIP:
+  # loadBalancerSourceRanges:
+  # - 10.10.10.0/24
+  annotations: {}
+  labels: {}
+
+hostNetwork: false
+
+priorityClassName: ""
+
+minReadySeconds: 0
+
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/role
+              operator: In
+              values:
+                - master
+
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+nodeSelector: {}
+
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1

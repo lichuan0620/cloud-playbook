@@ -1,0 +1,6 @@
+apiVersion: v2
+name: prometheus-operator
+description: Kubernetes operator that manages Prometheus and some of its popular addons.
+type: application
+appVersion: v0.43.2
+version: 1.0.0

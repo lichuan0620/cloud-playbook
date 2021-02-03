@@ -1,0 +1,5 @@
+apiVersion: v2
+name: operated-prometheus
+type: application
+appVersion: v2.23.0
+version: 1.0.0

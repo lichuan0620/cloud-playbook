@@ -1,0 +1,45 @@
+USER-SUPPLIED VALUES:
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm install -n monitoring -f helm-values/grafana.yaml grafana grafana/grafana --atomic --timeout 1m
+grafana.ini:
+  server:
+    root_url: http://0.0.0.0:3000/grafana
+admin:
+  existingSecret: grafana-admin-auth
+  userKey: grafana-admin-user
+  passwordKey: grafana-admin-password
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: system-prometheus
+        type: prometheus
+        url: "http://system-prometheus-operated-prometheus:9090"
+        isDefault: true
+resources:
+  limits:
+    cpu: 400m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+persistence:
+  enabled: true
+  size: 4Gi
+  storageClassName: default
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt
+  path: /grafana/?(.*)
+  hosts:
+    - devel.lichuan.guru
+  tls:
+    - hosts:
+        - devel.lichuan.guru
+      secretName: lichuan-guru-tls
+serviceMonitor:
+  enabled: true

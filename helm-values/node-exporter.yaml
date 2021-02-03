@@ -1,0 +1,14 @@
+USER-SUPPLIED VALUES:
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm install -n monitoring -f helm-values/node-exporter.yaml node-exporter bitnami/node-exporter --atomic --timeout 1m
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule

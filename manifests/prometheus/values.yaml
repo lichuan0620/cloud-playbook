@@ -1,0 +1,185 @@
+labels: {}
+
+## ref: https://kubernetes.io/docs/admin/authorization/rbac/
+rbac:
+  create: true
+
+image:
+  name: quay.io/prometheus/prometheus
+  ## default to Chart apiVersion
+  tag:
+
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+serviceAccount:
+  create: true
+  ## The name of the ServiceAccount to use.
+  # name:
+
+securityContext:
+  enabled: true
+  runAsUser: 65534  # nobody
+  runAsGroup: 65534 # nobody
+  fsGroup: 65534    # nobody
+
+resources:
+  limits:
+    cpu: '1'
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 2Gi
+
+service:
+  type: ClusterIP
+  port: 9090
+  # clusterIP: None
+  # nodePort: 30080
+  # loadBalancerIP:
+  # loadBalancerSourceRanges:
+  # - 10.10.10.0/24
+  annotations: {}
+  labels: {}
+
+## Label selectors for ServiceMonitor objects; the prometheus-operator generates scrape config based on the
+## selected objects
+serviceMonitor:
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#labelselector-v1-meta
+  namespaceSelector:
+    matchLabels: {}
+    matchExpressions: []
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#labelselector-v1-meta
+  selector:
+    matchLabels: {}
+    matchExpressions: []
+
+scrapeInterval: 30s
+scrapeTimeout:
+evaluationInterval: 30s
+
+## Configuration related to the Prometheus TSDB, remote storages, and volumes
+storage:
+  retention:
+    ## limit for time-based retention
+    duration: 3d
+    ## limit for size-based retention
+    size: 15GB
+
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#volume-v1-core
+  additionalVolumes: []
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#volumemount-v1-core
+  additionalVolumeMounts: []
+
+  ## If enabled, VolumeClaimTemplate will be configured for the Prometheus StatefulSet; the resulting volume
+  ## will be used for the Prometheus TSDB data directory
+  ## If no VolumeClaimTemplate is used, an EmptyDir will be used for the TSDB data directory
+  volumeClaimTemplate:
+    enabled: true
+    ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#persistentvolumeclaimspec-v1-core
+    spec:
+      accessModes: [ 'ReadWriteOnce' ]
+      storageClassName: default
+      resources:
+        limits:
+          storage: 8Gi
+        requests:
+          storage: 8Gi
+
+  ## https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#remotereadspec
+  remoteRead: {}
+    # url: "http://influxdb:8086/api/v1/prom/read"
+
+  ## https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#remotewritespec
+  remoteWrite: {}
+    # url: "http://influxdb:8086/api/v1/prom/write"
+
+externalLabels:
+  prometheus: "prometheus"
+  prometheusReplica: "prometheus_replica"
+  additional: {}
+    # key: value
+
+additionalScrapeConfigs:
+  enabled: true
+
+  ## if left empty, will use "{{ .Release.name }}-additional-configs"
+  secret: ""
+  file: additional-scrape-configs.yaml
+  optional: true
+
+  ## create a Secret containing scrape config for system services
+  createDefault: true
+
+additionalAlertRelabelConfigs:
+  enabled: false
+
+  ## if left empty, will use "{{ .Release.name }}-additional-configs"
+  secret: ""
+  file: additional-alert-relabel-configs.yaml
+  optional: true
+
+additionalAlertManagerConfigs:
+  enabled: false
+
+  ## if left empty, will use "{{ .Release.name }}-additional-configs"
+  secret: ""
+  file: additional-alertmanager-configs.yaml
+  optional: false
+
+## a list of Secrets that are in the same namespace as the Prometheus; these Secrets will be mounted to
+## the Prometheus container
+additionalSecrets:
+  - etcd-tls-secret
+
+thanos:
+  enabled: false
+
+  image:
+    name: quay.io/thanos/thanos
+    tag: v0.17.2
+
+  ## the resource allocated below is only suitable for a minimal cluster; for a large, production cluster,
+  ## it is unlikely to be enough
+  resources:
+    limits:
+      cpu: 400m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  service:
+    type: ClusterIP
+    grpc:
+      port: 10901
+      # clusterIP: None
+      # nodePort: 30081
+    http:
+      port: 10902
+      # clusterIP: None
+      # nodePort: 30082
+    # loadBalancerIP:
+    # loadBalancerSourceRanges:
+    # - 10.10.10.0/24
+    annotations: {}
+    labels: {}
+
+prometheusRules:
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#labelselector-v1-meta
+  selector:
+    matchLabels: {}
+    matchExpressions: []
+  ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#labelselector-v1-meta
+  namespaceSelector:
+    matchLabels: {}
+    matchExpressions: []
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: letsencrypt
+  host: devel.lichuan.guru
+  prefix: /prometheus
+  tlsSecretName: lichuan-guru-tls

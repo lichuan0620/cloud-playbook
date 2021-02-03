@@ -1,17 +1,20 @@
 NODE_COUNT ?= 1
-NODE_SIZE ?= m5.large
-NODE_VOLUME_SIZE ?= 30
+NODE_SIZE ?= t3.large
+NODE_VOLUME_SIZE ?= 20
 
 MASTER_COUNT ?= 3
-MASTER_SIZE ?= c5.large
+MASTER_SIZE ?= t3.large
 MASTER_VOLUME_SIZE ?= 20
+
+export VPC_ID ?= vpc-05a60f2ce4fc6e8ad
+export NETWORK_CIDR = 172.19.0.0/16
 
 ZONES ?= us-west-2a
 HA_ZONES ?= us-west-2a,us-west-2b,us-west-2c
 
 .PHONY: cluster cluster-single cluster-ha
 
-cluster: cluster-single
+cluster: cluster-single update-cluster
 
 cluster-single:
 	@echo ">> creating cluster $(KOPS_CLUSTER_NAME)"
@@ -22,11 +25,8 @@ cluster-single:
 	  --master-size $(MASTER_SIZE)										\
 	  --master-volume-size $(MASTER_VOLUME_SIZE)						\
 	  --zones $(ZONES) --cloud aws										\
+	  --vpc $(VPC_ID)		                							\
 	  --cloud-labels "kubernetes.io/cluster/$(KOPS_CLUSTER_NAME)=owned"
-	@echo ">> applying additional cluster configuration"
-	@kops replace -f kops/single-master-cluster.yaml
-	@echo ">> building cluster"
-	@kops update cluster --yes
 
 cluster-ha:
 	@echo ">> creating cluster $(KOPS_CLUSTER_NAME)"
@@ -38,11 +38,13 @@ cluster-ha:
       --master-size $(MASTER_SIZE)										\
       --master-volume-size $(MASTER_VOLUME_SIZE)						\
       --zones $(HA_ZONES)												\
+	  --vpc $(VPC_ID)		               								\
       --cloud-labels "kubernetes.io/cluster/$(KOPS_CLUSTER_NAME)=owned"
-	@echo ">> applying additional cluster configuration"
-	@kops replace -f kops/ha-cluster.yaml
-	@echo ">> building cluster"
-	@kops update cluster --yes
+
+update-cluster:
+	@echo ">> updating cluster"
+	@kops update cluster --yes \
+      --lifecycle-overrides SecurityGroup=ExistsAndWarnIfChanges,SecurityGroupRule=ExistsAndWarnIfChanges
 
 .PHONY: validate apply-deploy system-components
 

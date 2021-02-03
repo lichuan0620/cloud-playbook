@@ -1,0 +1,86 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: {{ template "common.names.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  podMetadata:
+    labels: {{- include "common.labels.standard" . | nindent 6 }}
+  image: {{ template "prometheus.image" . }}
+  serviceMonitorSelector: {{ toYaml .Values.serviceMonitor.selector | nindent 4}}
+  serviceMonitorNamespaceSelector: {{ toYaml .Values.serviceMonitor.namespaceSelector | nindent 4 }}
+  ruleSelector: {{ toYaml .Values.prometheusRules.selector | nindent 4}}
+  ruleNamespaceSelector: {{ toYaml .Values.prometheusRules.namespaceSelector | nindent 4 }}
+  {{- if .Values.scrapeTimeout }}
+  scrapeTimeout: {{ .Values.scrapeTimeout }}
+  {{- end }}
+  scrapeInterval: {{ .Values.scrapeInterval }}
+  evaluationInterval: {{ .Values.evaluationInterval }}
+  retention: {{ .Values.storage.retention.duration }}
+  {{- if .Values.storage.retention.size }}
+  retentionSize: {{ .Values.storage.retention.size }}
+  {{- end }}
+  {{- if .Values.externalLabels }}
+  replicaExternalLabelName: {{ .Values.externalLabels.prometheusReplica }}
+  prometheusExternalLabelName: {{ .Values.externalLabels.prometheus }}
+  {{- if .Values.externalLabels.additional }}
+  externalLabels: {{ toYaml .Values.externalLabels.additional | nindent 4 }}
+  {{- end }}
+  {{- if .Values.ingress.enabled }}
+  externalUrl: {{ template "prometheus.externalURL" . }}
+  {{- end }}
+  {{- end }}
+  {{- if .Values.additionalScrapeConfigs.enabled }}
+  additionalScrapeConfigs:
+    key: {{ .Values.additionalScrapeConfigs.file }}
+    name: {{ default (include "prometheus.additionalConfig.defaultSecretName" .) .Values.additionalScrapeConfigs.secret }}
+    optional: {{ default false .Values.additionalScrapeConfigs.optional }}
+  {{- end }}
+  {{- if .Values.additionalAlertRelabelConfigs.enabled }}
+  additionalAlertRelabelConfigs:
+    key: {{ .Values.additionalAlertRelabelConfigs.file }}
+    name: {{ default (include "prometheus.additionalConfig.defaultSecretName" .) .Values.additionalAlertRelabelConfigs.secret }}
+    optional: {{ default false .Values.additionalAlertRelabelConfigs.optional }}
+  {{- end }}
+  {{- if .Values.additionalAlertManagerConfigs.enabled }}
+  additionalAlertManagerConfigs:
+    key: {{ .Values.additionalAlertManagerConfigs.file }}
+    name: {{ default (include "prometheus.additionalConfig.defaultSecretName" .) .Values.additionalAlertManagerConfigs.secret }}
+    optional: {{ default false .Values.additionalAlertManagerConfigs.optional }}
+  {{- end }}
+  {{- if .Values.storage.volumeClaimTemplate.enabled }}
+  storage:
+    volumeClaimTemplate:
+      metadata:
+        labels: {{- include "common.labels.standard" . | nindent 10 }}
+      spec: {{ toYaml .Values.storage.volumeClaimTemplate.spec | nindent 8 }}
+  {{- end }}
+  {{- if .Values.additionalSecrets }}
+  secrets: {{ toYaml .Values.additionalSecrets | nindent 4 }}
+  {{- end }}
+  {{- if .Values.storage.remoteRead }}
+  remoteRead: {{ toYaml .Values.storage.remoteRead | nindent 4 }}
+  {{- end }}
+  {{- if .Values.storage.remoteWrite }}
+  remoteWrite: {{ toYaml .Values.storage.remoteWrite | nindent 4 }}
+  {{- end }}
+  {{- if .Values.securityContext.enabled }}
+  securityContext:
+    runAsUser: {{ .Values.securityContext.runAsUser }}
+    runAsGroup: {{ .Values.securityContext.runAsGroup }}
+    fsGroup: {{ .Values.securityContext.fsGroup }}
+  {{- end }}
+  {{- if .Values.resources }}
+  resources: {{- toYaml .Values.resources | nindent 4 }}
+  {{- end }}
+  {{- if .Values.serviceAccount.create }}
+  serviceAccountName: {{ template "common.names.serviceAccountName" . }}
+  {{- end }}
+  {{- if .Values.thanos.enabled }}
+  thanos:
+    image: {{ template "thanos.image" . }}
+    {{- if .Values.thanos.resources }}
+    resources: {{- toYaml .Values.thanos.resources | nindent 6 }}
+    {{- end }}
+  {{- end }}
