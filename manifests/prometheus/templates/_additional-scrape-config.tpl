@@ -75,6 +75,38 @@
   - source_labels: [__meta_kubernetes_node_address_internalIP]
     target_label: host_ip
 
+- job_name: kube-scheduler
+  kubernetes_sd_configs:
+  - role: node
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_node_label_kubernetes_io_role]
+    regex: master
+    action: keep
+  - source_labels: [__address__]
+    regex: ([^:]+)(?::\d+)?
+    replacement: $1:10251
+    target_label: __address__
+  - source_labels: [__meta_kubernetes_node_name]
+    target_label: node
+  - source_labels: [__meta_kubernetes_node_address_internalIP]
+    target_label: host_ip
+
+- job_name: kube-controller-manager
+  kubernetes_sd_configs:
+  - role: node
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_node_label_kubernetes_io_role]
+    regex: master
+    action: keep
+  - source_labels: [__address__]
+    regex: ([^:]+)(?::\d+)?
+    replacement: $1:10252
+    target_label: __address__
+  - source_labels: [__meta_kubernetes_node_name]
+    target_label: node
+  - source_labels: [__meta_kubernetes_node_address_internalIP]
+    target_label: host_ip
+
 - job_name: 'etcd-main'
   scheme: https
   tls_config:
