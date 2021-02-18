@@ -17,7 +17,7 @@ Run `ssh-keygen` if the `~/.ssh/id_rsa` file is missing.
 If you want to use custom security group and VPC, you might want to create them now.
 
 ```
-export VPC_ID ?= vpc-05a60f2ce4fc6e8ad
+export VPC_ID ?= vpc-02a4b5b457e148ccc
 export NETWORK_CIDR = 172.19.0.0/16
 ```
 
@@ -28,17 +28,13 @@ export NETWORK_CIDR = 172.19.0.0/16
 Single master
 
 ```
-kops create cluster                                                 \
-  --node-count 2 --node-size t3.large --node-volume-size 20         \
-  --master-size t3.large --master-volume-size 20                    \
-  --zones ap-northeast-1a --cloud aws --vpc $(VPC_ID)               \
-  --cloud-labels "kubernetes.io/cluster/k8s.lichuan.guru=owned"
+make cluster-single
 ```
 
 HA (3 masters)
 
 ```
-WIP
+make cluster-ha
 ```
 
 ### Optional Manual Setups
@@ -66,8 +62,14 @@ Node related, run `kops edit ig --name=k8s.lichuan.guru nodes` and `kops edit ig
  * To specify custom security group, add:
    ```
    spec:
-     securityGroupOverride: sg-0d3b4041701f62479
+     securityGroupOverride: sg-01229b0b75a991afe
    ```
+
+You might also want to use the predefined template:
+
+```
+kops replace -f kops/ha-cluster.yaml
+```
 
 To use a private topology, a non-default [networking model](https://kops.sigs.k8s.io/networking/) must be used.
 
@@ -86,12 +88,6 @@ kops update cluster --yes \
   --lifecycle-overrides SecurityGroup=ExistsAndWarnIfChanges,SecurityGroupRule=ExistsAndWarnIfChanges
 ```
 
- * validate cluster: `kops validate cluster`
- * list nodes: `kubectl get nodes --show-labels`
- * ssh to the master: `ssh -i ~/.ssh/id_rsa admin@api.k8s.lichuan.guru`
- * the admin user is specific to Debian. If not using Debian please use the appropriate user based on your OS.
- * read about installing addons at: https://github.com/kubernetes/kops/blob/master/docs/operations/addons.md.
- 
 In case you accessed the cluster before the DNS configuration is fully updated, you might want to flush the DNS cache before you try again.
 
 ## Setup the Cluster
@@ -136,8 +132,6 @@ kubectl create ns network
 __ingress-nginx__
 
 ```
-export LB_NODE=kube-node-1
-kubectl label node ${LB_NODE} lichuan.guru/role=loadbalancer
 helm install -n network -f helm-values/ingress-nginx.yaml \
   ingress-nginx ingress-nginx/ingress-nginx --atomic --timeout 1m
 ```
@@ -212,5 +206,5 @@ Add the dashboards:
 | Node Analysis         | WIP                                          |
 | Container Overview    | WIP                                          |
 | Container Analysis    | WIP                                          |
-| Kubernetes Overview   | WIP                                          |
+| Kubernetes Overview   | https://grafana.com/grafana/dashboards/13838 |
 | Ingress Nginx         | WIP                                          |

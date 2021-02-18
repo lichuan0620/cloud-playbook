@@ -26,8 +26,8 @@ resources:
     cpu: '1'
     memory: 4Gi
   requests:
-    cpu: 500m
-    memory: 2Gi
+    cpu: 250m
+    memory: 1Gi
 
 service:
   type: ClusterIP
@@ -62,7 +62,7 @@ storage:
     ## limit for time-based retention
     duration: 3d
     ## limit for size-based retention
-    size: 15GB
+    size: 8GB
 
   ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#volume-v1-core
   additionalVolumes: []
@@ -77,12 +77,12 @@ storage:
     ## https://v1-17.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#persistentvolumeclaimspec-v1-core
     spec:
       accessModes: [ 'ReadWriteOnce' ]
-      storageClassName: default
+      storageClassName: kops-ssd-1-17
       resources:
         limits:
-          storage: 8Gi
+          storage: 10Gi
         requests:
-          storage: 8Gi
+          storage: 10Gi
 
   ## https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#remotereadspec
   remoteRead: {}
@@ -141,8 +141,8 @@ thanos:
   ## it is unlikely to be enough
   resources:
     limits:
-      cpu: 400m
-      memory: 512Mi
+      cpu: 200m
+      memory: 256Mi
     requests:
       cpu: 50m
       memory: 64Mi
@@ -179,7 +179,7 @@ ingress:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/use-regex: "true"
-    cert-manager.io/cluster-issuer: letsencrypt
+    # cert-manager.io/cluster-issuer: letsencrypt
   host: devel.lichuan.guru
   prefix: /prometheus
-  tlsSecretName: lichuan-guru-tls
+  tlsSecretName: 

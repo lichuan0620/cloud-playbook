@@ -15,38 +15,50 @@ spec:
   containerRuntime: containerd
   etcdClusters:
   - name: main
-    cpuRequest: 200m
-    memoryRequest: 100Mi
+    cpuRequest: 100m
+    memoryRequest: 128Mi
     etcdMembers:
     - instanceGroup: master-us-west-2a
       name: a
+      volumeSize: 8
   - name: events
     cpuRequest: 100m
-    memoryRequest: 100Mi
+    memoryRequest: 128Mi
     etcdMembers:
     - instanceGroup: master-us-west-2a
       name: a
+      volumeSize: 8
   iam:
     allowContainerRegistry: true
     legacy: false
+  kubeAPIServer:
+    securePort: 6443
   kubelet:
     anonymousAuth: false
     authorizationMode: Webhook
     authenticationTokenWebhook: true
+    kubeReserved:
+      cpu: 200m
+      memory: 512Mi
+      ephemeral-storage: 1Gi
+    systemReserved:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 1Gi
   kubernetesApiAccess:
   - 0.0.0.0/0
   kubernetesVersion: 1.18.15
   masterInternalName: api.internal.k8s.lichuan.guru
   masterPublicName: api.k8s.lichuan.guru
   networkCIDR: 172.19.0.0/16
-  networkID: vpc-05a60f2ce4fc6e8ad
+  networkID: vpc-02a4b5b457e148ccc
   networking:
     kubenet: {}
   nonMasqueradeCIDR: 100.64.0.0/10
   sshAccess:
   - 0.0.0.0/0
   subnets:
-  - cidr: 172.19.32.0/19
+  - cidr: 172.0.32.0/19
     name: us-west-2a
     type: Public
     zone: us-west-2a

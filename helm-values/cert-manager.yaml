@@ -9,6 +9,10 @@ resources:
   requests:
     cpu: 25m
     memory: 64Mi
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
 prometheus:
   servicemonitor:
     enabled: true
@@ -20,6 +24,10 @@ webhook:
     requests:
       cpu: 25m
       memory: 32Mi
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
 cainjector:
   resources:
     limits:
@@ -28,4 +36,7 @@ cainjector:
     requests:
       cpu: 25m
       memory: 64Mi
-
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule

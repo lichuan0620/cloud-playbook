@@ -12,56 +12,74 @@ spec:
     kubernetes.io/cluster/k8s.lichuan.guru: owned
   cloudProvider: aws
   configBase: s3://kube-lichuan-guru-state-store/k8s.lichuan.guru
+  containerRuntime: containerd
   etcdClusters:
   - name: main
-    version: 3.3.13
-    cpuRequest: 200m
-    memoryRequest: 100Mi
-    etcdMembers:
-    - instanceGroup: master-us-west-2a
-      name: a
-    - instanceGroup: master-us-west-2b
-      name: b
-    - instanceGroup: master-us-west-2c
-      name: c
-  - name: events
-    version: 3.3.13
     cpuRequest: 100m
-    memoryRequest: 100Mi
+    memoryRequest: 128Mi
     etcdMembers:
     - instanceGroup: master-us-west-2a
       name: a
+      volumeSize: 8
     - instanceGroup: master-us-west-2b
       name: b
+      volumeSize: 8
     - instanceGroup: master-us-west-2c
       name: c
+      volumeSize: 8
+  - name: events
+    cpuRequest: 100m
+    memoryRequest: 128Mi
+    etcdMembers:
+    - instanceGroup: master-us-west-2a
+      name: a
+      volumeSize: 8
+    - instanceGroup: master-us-west-2b
+      name: b
+      volumeSize: 8
+    - instanceGroup: master-us-west-2c
+      name: c
+      volumeSize: 8
   iam:
     allowContainerRegistry: true
     legacy: false
+  kubeAPIServer:
+    securePort: 6443
   kubelet:
     anonymousAuth: false
     authorizationMode: Webhook
     authenticationTokenWebhook: true
+    kubeReserved:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 1Gi
+    systemReserved:
+      cpu: 100m
+      memory: 256Mi
+      ephemeral-storage: 1Gi
   kubernetesApiAccess:
   - 0.0.0.0/0
-  kubernetesVersion: 1.16.9
+  kubernetesVersion: 1.18.15
+  masterInternalName: api.internal.k8s.lichuan.guru
   masterPublicName: api.k8s.lichuan.guru
-  networkCIDR: 172.20.0.0/16
+  networkCIDR: 172.0.0.0/16
+  networkID: vpc-02a4b5b457e148ccc
   networking:
     kubenet: {}
   nonMasqueradeCIDR: 100.64.0.0/10
   sshAccess:
   - 0.0.0.0/0
+  sshKeyName: lichuan.guru
   subnets:
-  - cidr: 172.20.32.0/19
+  - cidr: 172.0.32.0/19
     name: us-west-2a
     type: Public
     zone: us-west-2a
-  - cidr: 172.20.64.0/19
+  - cidr: 172.0.64.0/19
     name: us-west-2b
     type: Public
     zone: us-west-2b
-  - cidr: 172.20.96.0/19
+  - cidr: 172.0.96.0/19
     name: us-west-2c
     type: Public
     zone: us-west-2c

@@ -3,12 +3,22 @@ USER-SUPPLIED VALUES:
 # helm install -n monitoring -f helm-values/kube-state-metrics.yaml kube-state-metrics bitnami/kube-state-metrics --atomic --timeout 1m
 resources:
   limits:
-    cpu: 100m
+    cpu: 50m
     memory: 128Mi
   requests:
-    cpu: 50m
+    cpu: 25m
     memory: 64Mi
 tolerations:
   - key: node-role.kubernetes.io/master
     operator: Exists
     effect: NoSchedule
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+            - key: kubernetes.io/role
+              operator: In
+              values:
+                - master

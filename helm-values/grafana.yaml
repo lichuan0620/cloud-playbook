@@ -18,28 +18,24 @@ datasources:
         isDefault: true
 resources:
   limits:
-    cpu: 400m
-    memory: 512Mi
+    cpu: 200m
+    memory: 256Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 50m
+    memory: 64Mi
 persistence:
   enabled: true
-  size: 4Gi
-  storageClassName: default
+  size: 2Gi
+  storageClassName: kops-ssd-1-17
 ingress:
   enabled: true
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/use-regex: "true"
-    cert-manager.io/cluster-issuer: letsencrypt
+    #cert-manager.io/cluster-issuer: letsencrypt
   path: /grafana/?(.*)
   hosts:
     - devel.lichuan.guru
-  tls:
-    - hosts:
-        - devel.lichuan.guru
-      secretName: lichuan-guru-tls
 serviceMonitor:
   enabled: true
