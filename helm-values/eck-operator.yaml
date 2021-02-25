@@ -1,0 +1,16 @@
+USER-SUPPLIED VALUES:
+# helm repo add elastic https://helm.elastic.co
+# helm install -n elasticsearch -f helm-values/eck-operator.yaml eck-operator elastic/eck-operator --atomic --timeout 1m
+resources:
+  limits:
+    cpu: "200m"
+    memory: "256Mi"
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
+config:
+  metricsPort: 8081
+tolerations:
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
