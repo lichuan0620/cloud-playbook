@@ -1,0 +1,144 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: devel
+  namespace: elasticsearch
+spec:
+  version: "7.11.1"
+  http:
+    service:
+      spec:
+        selector:
+          elasticsearch.k8s.elastic.co/cluster-name: "devel"
+          elasticsearch.k8s.elastic.co/node-master: "false"
+  nodeSets:
+  - name: masters
+    count: 3
+    config:
+      node.roles: ["master"]
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            limits:
+              memory: 1Gi
+              cpu: 400m
+            requests:
+              memory: 1Gi
+              cpu: 200m
+        nodeSelector:
+          node-role.kubernetes.io/master: ""
+        tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+          limits:
+            storage: 1Gi
+        storageClassName: kops-ssd-1-17
+  - name: data
+    count: 1
+    config: 
+      ## disabling mmap is not necessary because kops set vm.max_map_count=262144 by
+      ## default; otherwise, either disable mmap (costing performance) or ensure all
+      ## nodes have vm.max_map_count via other means
+      #node.store.allow_mmap: false
+      node.roles: ["data", "ingest", "ml", "transform"]
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: "1"
+            requests:
+              memory: 4Gi
+              cpu: 200m
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 64Gi
+          limits:
+            storage: 64Gi
+        storageClassName: kops-ssd-1-17
+---
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: devel
+  namespace: elasticsearch
+spec:
+  version: 7.11.1
+  count: 1
+  config:
+    server.rewriteBasePath: "true"
+    server.basePath: "/kibana"
+  elasticsearchRef:
+    name: devel
+    namespace: elasticsearch
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        env:
+          - name: NODE_OPTIONS
+            value: "--max-old-space-size=512"
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 400m
+          requests:
+            memory: 128Mi
+            cpu: 100m
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /kibana/login
+            port: 5601
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devel-kibana
+  namespace: elasticsearch
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/app-root: /kibana
+  labels:
+    app: devel-kb-oauth2-proxy
+spec:
+  rules:
+  - host: devel.lichuan.guru
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/kibana"
+        backend:
+          service:
+            name: devel-kb-http
+            port:
+              name: http
