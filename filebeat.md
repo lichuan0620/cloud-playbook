@@ -56,9 +56,6 @@ PUT _index_template/logs-container-kubernetes
         "yyyy/MM/dd HH:mm:ss Z||yyyy/MM/dd Z"
       ],
       "dynamic": true,
-      "_source": {
-        "enabled": false
-      },
       "dynamic_templates": [
         {
           "kubernetes_fields_as_keywords": {
@@ -103,7 +100,7 @@ PUT _index_template/logs-container-kubernetes
     }
   },
   "index_patterns": [
-    "logs-container-kubernetes-*"
+    "logs-container-kubernetes*"
   ],
   "data_stream": {
     "hidden": false
