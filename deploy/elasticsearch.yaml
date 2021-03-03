@@ -63,7 +63,7 @@ spec:
               cpu: "1"
             requests:
               memory: 4Gi
-              cpu: 200m
+              cpu: 500m
     volumeClaimTemplates:
     - metadata:
         name: elasticsearch-data
@@ -96,6 +96,9 @@ spec:
       selfSignedCertificate:
         disabled: true
   podTemplate:
+    metadata:
+      annotations:
+        co.elastic.logs/module: ""
     spec:
       containers:
       - name: kibana
@@ -107,7 +110,7 @@ spec:
             memory: 512Mi
             cpu: 400m
           requests:
-            memory: 128Mi
+            memory: 256Mi
             cpu: 100m
         readinessProbe:
           failureThreshold: 3
