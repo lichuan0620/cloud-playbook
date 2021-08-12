@@ -18,17 +18,13 @@ serviceAccount:
 image:
   name: quay.io/prometheus-operator/prometheus-operator
   ## default to .Chart.apiVersion
-  # tag: v0.43.2
+  # tag: v0.48.1
   pullPolicy: Always
-
-configmapReloaderImage:
-  name: jimmidyson/configmap-reload
-  tag: v0.4.0
 
 prometheusConfigReloaderImage:
   name: quay.io/prometheus-operator/prometheus-config-reloader
   ## default to .Chart.apiVersion
-  # tag: v0.43.2
+  # tag: v0.48.1
 
 ## Additional command line arguments to pass to prometheus-operator
 extraArgs: {}

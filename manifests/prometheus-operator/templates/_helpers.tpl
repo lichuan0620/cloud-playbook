@@ -66,7 +66,3 @@ Return the proper image name
 {{- $tag := (default .Chart.AppVersion .Values.prometheusConfigReloaderImage.tag) | toString -}}
 {{- printf "%s:%s" .Values.prometheusConfigReloaderImage.name $tag -}}
 {{- end -}}
-{{- define "configmap-reloader.image" -}}
-{{- $tag := (default .Chart.AppVersion .Values.configmapReloaderImage.tag) | toString -}}
-{{- printf "%s:%s" .Values.configmapReloaderImage.name $tag -}}
-{{- end -}}

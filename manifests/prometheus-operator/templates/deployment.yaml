@@ -43,9 +43,7 @@ spec:
           image: {{ template "common.images.image" . }}
           imagePullPolicy: {{ default "Always" .Values.image.pullPolicy }}
           args:
-            - --logtostderr=true
             - --prometheus-config-reloader={{ template "prometheus-config-reloader.image" . }}
-            - --config-reloader-image={{ template "configmap-reloader.image" . }}
             {{- if .Values.kubeletService.enabled }}
             - --kubelet-service={{ default .Release.Namespace .Values.kubeletService.namespace }}/{{ .Values.kubeletService.name }}
             {{- end }}
