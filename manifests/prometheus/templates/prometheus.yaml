@@ -84,3 +84,12 @@ spec:
     resources: {{- toYaml .Values.thanos.resources | nindent 6 }}
     {{- end }}
   {{- end }}
+  containers:
+  - name: config-reloader
+    resources:
+      limits:
+        cpu: 100m
+        memory: 32Mi
+      requests:
+        cpu: 50m
+        memory: 16Mi
