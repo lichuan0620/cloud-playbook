@@ -3,7 +3,8 @@ USER-SUPPLIED VALUES:
 # helm install -n monitoring -f helm-values/grafana.yaml grafana grafana/grafana --atomic --timeout 1m
 grafana.ini:
   server:
-    root_url: http://0.0.0.0:3000/grafana
+    root_url: https://devel.lichuan.guru/grafana
+    enable_gzip: true
 admin:
   existingSecret: grafana-admin-auth
   userKey: grafana-admin-user
