@@ -1,0 +1,258 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: amp-agent-default-scrape-configs
+  namespace: monitoring
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+type: Opaque
+stringData:
+  scrape-configs.yaml: |-
+    - job_name: amp-agent
+      static_configs:
+      - targets: ['localhost:9090']
+      metrics_path: /prometheus/metrics
+
+    - job_name: cadvisor
+      kubernetes_sd_configs:
+      - role: node
+      tls_config:
+        insecure_skip_verify: true
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      metrics_path: /metrics/cadvisor
+      scheme: https
+
+    - job_name: kubelet
+      kubernetes_sd_configs:
+      - role: node
+      tls_config:
+        insecure_skip_verify: true
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      scheme: https
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+      - source_labels: [__meta_kubernetes_node_address_internalIP]
+        target_label: host_ip
+
+    - job_name: node-exporter
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - monitoring
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: node-exporter
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_node_name]
+        target_label: node
+      - source_labels: [__meta_kubernetes_pod_host_ip]
+        target_label: host_ip
+
+    - job_name: kube-state-metrics
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - monitoring
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name]
+        regex: kube-state-metrics
+        action: keep
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        regex: http
+        action: keep
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: amp-agent
+  namespace: monitoring
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/metrics
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: amp-agent-prometheus-role
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+  - kind: ServiceAccount
+    name: amp-agent
+    namespace: monitoring
+---
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: amp-agent
+  namespace: monitoring
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+spec:
+  image: quay.io/prometheus/prometheus:v2.35.0
+  replicas: 1
+  podMetadata:
+    labels:
+      prometheus: amp-agent
+      app.kubernetes.io/name: prometheus
+      app.kubernetes.io/instance: amp-agent
+  scrapeInterval: 15s
+  scrapeTimeout: 10s
+  evaluationInterval: 15s
+  serviceMonitorSelector:
+    matchLabels: {}
+  serviceMonitorNamespaceSelector:
+    matchLabels: {}
+  podMonitorSelector:
+    matchLabels: {}
+  podMonitorNamespaceSelector:
+    matchLabels: {}
+  probeSelector:
+    matchLabels: {}
+  probeNamespaceSelector:
+    matchLabels: {}
+  additionalScrapeConfigs:
+    name: amp-agent-default-scrape-configs
+    key: scrape-configs.yaml
+  remoteWrite:
+    - name: amp-eks-lichuan-guru-default
+      url: "https://aps-workspaces.us-west-2.amazonaws.com/workspaces/ws-17528bc9-8080-4d52-94c6-d18689bc1806/api/v1/remote_write"
+      remoteTimeout: 5s
+      sigv4:
+        region: us-west-2
+        accessKey:
+          name: amp-agent-aksk
+          key: accessKey
+        secretKey:
+          name: amp-agent-aksk
+          key: secretKey
+  externalUrl: /prometheus/
+  routePrefix: /prometheus/
+  containers:
+    - name: prometheus
+      args:
+        - --web.console.templates=/etc/prometheus/consoles
+        - --web.console.libraries=/etc/prometheus/console_libraries
+        - --config.file=/etc/prometheus/config_out/prometheus.env.yaml
+        - --web.enable-lifecycle
+        - --enable-feature=agent
+        - --web.route-prefix=/prometheus/
+        - --web.external-url=/prometheus/
+        - --web.config.file=/etc/prometheus/web_config/web-config.yaml
+      resources:
+        limits:
+          cpu: "1"
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 1Gi
+    - name: config-reloader
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+  serviceAccountName: amp-agent
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - preference:
+            matchExpressions:
+              - key: lichuan.guru/capacity-type
+                operator: In
+                values:
+                  - normal
+          weight: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amp-agent
+  namespace: monitoring
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9090
+      targetPort: web
+  selector:
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amp-agent
+  namespace: monitoring
+  labels:
+    prometheus: amp-agent
+    app.kubernetes.io/name: prometheus
+    app.kubernetes.io/instance: amp-agent
+  annotations:
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: lichuan-guru
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/security-groups: sg-0c69f949d1b73af3a
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-path: /grafana/api/health
+    alb.ingress.kubernetes.io/success-codes: "200"
+spec:
+  ingressClassName: alb
+  rules:
+    - host: devel.lichuan.guru
+      http:
+        paths:
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: amp-agent
+                port:
+                  number: 9090
